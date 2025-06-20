@@ -19,34 +19,45 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 @app.route('/')
 def home():
     return render_template("home.html")
+
 @app.route('/journal', methods=['GET', 'POST'])
 def journal():
     if request.method == 'POST':
-        entry = request.form['journalText']
+        entry = request.form.get('journalText', '').strip()
         if entry:
             with open('journal.txt', 'a', encoding='utf-8') as f:
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 f.write(f"{timestamp}\n{entry}\n---\n")
 
+    journal_entries = []
     if os.path.exists('journal.txt'):
         with open('journal.txt', 'r', encoding='utf-8') as f:
-            journal_entries = f.read().split('---\n')
-    else:
-        journal_entries = []
-    return render_template('journal.html', journal=journal_entries[::-1])
+            raw_entries = f.read().strip().split('---\n')
+            for entry in raw_entries:
+                if entry.strip():
+                    # split timestamp and content by first newline
+                    parts = entry.strip().split('\n', 1)
+                    if len(parts) == 2:
+                        journal_entries.append({'timestamp': parts[0], 'content': parts[1]})
+    # Show newest first
+    journal_entries.reverse()
+
+    return render_template('journal.html', journal=journal_entries)
+
 @app.route('/delete_entry', methods=['POST'])
 def delete_entry():
     timestamp = request.form.get('timestamp')
-    if os.path.exists('journal.txt') and timestamp:
+    if timestamp and os.path.exists('journal.txt'):
         with open('journal.txt', 'r', encoding='utf-8') as f:
             entries = f.read().strip().split('---\n')
-        entries = [entry for entry in entries if not entry.startswith(timestamp)]
+        entries = [e for e in entries if not e.startswith(timestamp)]
         with open('journal.txt', 'w', encoding='utf-8') as f:
             for e in entries:
                 f.write(e.strip() + '\n---\n')
     return redirect(url_for('journal'))
+
 @app.route('/mood')
-def index():
+def mood():
     return render_template("index.html")
 
 @app.route('/analyze', methods=['POST'])
@@ -72,13 +83,25 @@ def analyze():
 
         image_url = url_for('static', filename=f'uploads/{filename}')
         return render_template('index.html', emotion=emotion, image_url=image_url)
-    
+
     else:
         return render_template('index.html', error="Invalid file format")
-@app.route('/todo')
-def todo():
-    return "<h2 style='text-align:center;margin-top:50px;'>📝 To-Do Page coming soon!</h2>"
 
+@app.route('/todo', methods=['GET', 'POST'])
+def todo():
+    todos = []
+    if os.path.exists('todo.txt'):
+        with open('todo.txt', 'r', encoding='utf-8') as f:
+            todos = [line.strip() for line in f if line.strip()]
+
+    if request.method == 'POST':
+        task = request.form.get('task', '').strip()
+        if task:
+            with open('todo.txt', 'a', encoding='utf-8') as f:
+                f.write(f"{task}\n")
+            return redirect(url_for('todo'))
+
+    return render_template('todo.html', todos=todos)
 
 if __name__ == '__main__':
     app.run(debug=True)
