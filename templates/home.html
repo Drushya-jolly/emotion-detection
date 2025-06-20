@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title> Calmi </title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+  font-family: 'Dancing Script', cursive;
+  background: lab(60.46% 24.67 -23.25);
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+h1 {
+  font-size: 3rem;
+  color: #7b1fa2;
+  font-family: 'Dancing Script', cursive;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 3px solid #ba68c8;
+  width: 0;
+  margin: 0 auto 2rem;
+  animation: handwriting 7s steps(30, end) infinite, blink-caret 0.40s step-end infinite;
+}
+
+@keyframes handwriting {
+  0% { width: 0; }
+  50% { width: 100%; }
+  100% { width: 0; }
+}
+
+@keyframes blink-caret {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: lab(60.46% 24.67 -23.25); }
+}
+
+.nav-button {
+  display: block;
+  font-family: 'Dancing Script', cursive;
+  margin: 20px auto;
+  padding: 15px 30px;
+  background-color: #ba68c8;
+  color: rgb(245, 187, 210);
+  text-decoration: none;
+  border-radius: 12px;
+  font-size: 1.6rem;
+  width: 250px;
+  transition: 0.3s ease;
+  
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+
+    .nav-button {
+      display: block;
+      margin: 20px auto;
+      padding: 15px 30px;
+      background-color: #ba68c8;
+      color: rgb(245, 187, 210);
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      width: 250px;
+      transition: 0.3s ease;
+    }
+
+    .nav-button:hover {
+      background-color: #9c27b0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌼 Welcome to Calmi 🌼</h1>
+
+  <a class="nav-button" href="{{ url_for('index') }}">1. Find Your Mood</a>
+  <a class="nav-button" href="{{ url_for('journal') }}">2. Journal</a>
+  <!--<a class="nav-button" href="{{ url_for('todo') }}">3. To-Do List</a> -->
+
+</body>
+</html>

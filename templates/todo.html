@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📋 To-Do List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Quicksand&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #fff7f3;
+      font-family: 'Quicksand', sans-serif;
+      margin: 0;
+      padding: 30px 20px;
+      position: relative;
+    }
+
+    .top-title {
+      position: absolute;
+      top: 20px;
+      left: 30px;
+      font-size: 28px;
+      color: #c36bae;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      background: #ffeaf5;
+      padding: 8px 16px;
+      border-radius: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 42px;
+      text-align: center;
+      color: #b35d84;
+      margin-bottom: 10px;
+    }
+
+    #todoSection {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .calendar-display {
+      text-align: center;
+      font-family: 'Dancing Script', cursive;
+      font-size: 28px;
+      color: #653f4c;
+      margin: 10px 0;
+    }
+
+    .change-date {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .change-date input[type="date"] {
+      padding: 10px;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .box {
+      background-color: #ffffff;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    }
+
+    .must   { background-color: #fde2e2; }
+    .should { background-color: #fff1e6; }
+    .could  { background-color: #e0f0ff; }
+    .time   { background-color: #efe0ff; }
+
+    .box-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 22px;
+      color: #4e2e20;
+      margin-bottom: 12px;
+    }
+
+    .task {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .task input[type="checkbox"] {
+      transform: scale(1.3);
+      accent-color: #ec5c95;
+    }
+
+    .task input[type="text"] {
+      flex: 1 1 150px;
+      font-size: 16px;
+      border: none;
+      outline: none;
+      background: transparent;
+      border-bottom: 1px dashed #ccc;
+      font-family: 'Dancing Script', cursive;
+      padding: 4px 0;
+    }
+
+    .done {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .open-btn {
+      padding: 12px 20px;
+      border-radius: 10px;
+      background-color: #ffc0cb;
+      border: none;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .open-btn:hover {
+      background-color: #ff99aa;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CALMI top-left title -->
+  <div class="top-title">CALMI</div>
+
+  <h1>🌼 My Daily To-Do List</h1>
+
+  <!-- Button to open/close the to-do section -->
+  <div style="text-align: center;">
+    <button onclick="toggleTodo()" class="open-btn">📋 Open To-Do List</button>
+  </div>
+
+  <!-- To-Do Section -->
+  <div id="todoSection">
+    <div class="calendar-display" id="prettyDate">📅 Select a date</div>
+    <div class="change-date">
+      <input type="date" id="taskDate" onchange="loadDate(this.value)">
+    </div>
+    <div class="grid" id="taskGrid"></div>
+  </div>
+
+  <script>
+    let currentDate = null;
+
+    function toggleTodo() {
+      const section = document.getElementById('todoSection');
+      section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function formatDateReadable(dateString) {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+
+    function toggleDone(checkbox) {
+      const input = checkbox.nextElementSibling;
+      input.classList.toggle('done', checkbox.checked);
+      saveTasks(currentDate);
+    }
+
+    function createTaskBox(title, colorClass) {
+      const box = document.createElement('div');
+      box.className = `box ${colorClass}`;
+
+      const heading = document.createElement('div');
+      heading.className = 'box-title';
+      heading.textContent = title;
+      box.appendChild(heading);
+
+      for (let i = 0; i < 3; i++) {
+        const task = document.createElement('div');
+        task.className = 'task';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.onchange = () => toggleDone(checkbox);
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Task ${i + 1}`;
+        input.oninput = () => saveTasks(currentDate);
+
+        task.appendChild(checkbox);
+        task.appendChild(input);
+        box.appendChild(task);
+      }
+
+      return box;
+    }
+
+    function saveTasks(dateKey) {
+      const taskGrid = document.getElementById('taskGrid');
+      const allTasks = [];
+
+      taskGrid.querySelectorAll('.box').forEach(box => {
+        const title = box.querySelector('.box-title').textContent;
+        const tasks = [];
+
+        box.querySelectorAll('.task').forEach(task => {
+          const checkbox = task.querySelector('input[type="checkbox"]');
+          const input = task.querySelector('input[type="text"]');
+          tasks.push({
+            text: input.value,
+            done: checkbox.checked
+          });
+        });
+
+        allTasks.push({ title, tasks });
+      });
+
+      localStorage.setItem("tasks_" + dateKey, JSON.stringify(allTasks));
+    }
+
+    function loadDate(dateValue) {
+      currentDate = dateValue;
+      document.getElementById('prettyDate').textContent = "📅 " + formatDateReadable(dateValue);
+
+      const grid = document.getElementById('taskGrid');
+      grid.innerHTML = '';
+
+      const boxes = [
+        { title: 'Must Do', class: 'must' },
+        { title: 'Should Do', class: 'should' },
+        { title: 'Could Do', class: 'could' },
+        { title: 'If I Have Time', class: 'time' },
+      ];
+
+      boxes.forEach(box => {
+        const taskBox = createTaskBox(box.title, box.class);
+        grid.appendChild(taskBox);
+      });
+
+      const saved = localStorage.getItem("tasks_" + dateValue);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        parsed.forEach((section, index) => {
+          const box = grid.children[index];
+          box.querySelectorAll('.task').forEach((taskEl, i) => {
+            if (section.tasks[i]) {
+              taskEl.querySelector('input[type="text"]').value = section.tasks[i].text;
+              taskEl.querySelector('input[type="checkbox"]').checked = section.tasks[i].done;
+              if (section.tasks[i].done) {
+                taskEl.querySelector('input[type="text"]').classList.add('done');
+              }
+            }
+          });
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>

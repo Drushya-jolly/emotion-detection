@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  
+
+  <title>Calmi – Capture Mood</title>
+  <!-- This goes inside the <head> section -->
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+ 
+  
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: lab(60.46% 24.67 -23.25);
+      margin: 0;
+      padding: 2rem;
+      transition: background 0.8s ease;
+      
+
+    }
+
+    h1, h2 {
+      margin-bottom: 1rem;
+    }
+    
+
+
+    video, img {
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    @keyframes floaty {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+lottie-player {
+  animation: floaty 3s ease-in-out infinite;
+}
+
+
+    button {
+      margin: 0.5rem;
+      padding: 10px 20px;
+      border: none;
+      background: #4f46e5;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #4338ca;
+    }
+
+    textarea, input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      margin: 0.5rem 0;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+
+  font-size: 1rem;
+  text-decoration: none;
+  color: #7c4dff;
+  background: #f3e5f5;
+  padding: 10px 20px;
+
+  border: none;
+  border-radius: 50% 40% 50% 40% / 60% 50% 60% 50%;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+  font-family: 'Comic Sans MS', cursive;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: #e1bee7;
+  transform: scale(1.05);
+  color: #4a148c;
+}
+
+
+
+    li {
+      margin: 5px;
+      background: white;
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 8px;
+    }
+    .sticker-container {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+
+  </style>
+<a href="{{ url_for('home') }}" class="back-btn">← Back to Home</a>
+
+
+</head>
+<body id="body">
+
+  <h1>📸 Calmi – Click Your Mood</h1>
+
+  <video id="video" width="300" autoplay></video>
+
+  <form id="photoForm" method="post" enctype="multipart/form-data" action="/analyze">
+    <input type="file" id="photoInput" name="photo" style="display:none;">
+    <button type="button" onclick="capture()">Capture Mood</button>
+    <button type="submit" id="submitBtn" style="display:none;">Analyze Mood</button>
+  </form>
+
+
+
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="preview" style="display:none; margin-top:1rem;" width="300">
+
+  {% if emotion %}
+    <h2>Your mood: {{ emotion }}</h2>
+    <script>
+      const mood = "{{ emotion }}";
+      const body = document.getElementById('body');
+      if (mood === 'happy') body.style.background = '#fff9c4';
+      else if (mood === 'sad') body.style.background = '#bbdefb';
+      else if (mood === 'angry') body.style.background = '#ffcdd2';
+      else if (mood === 'surprise') body.style.background = '#e1bee7';
+      else if (mood === 'neutral') body.style.background = '#c8e6c9';
+      else body.style.background = '#f3f4f6';
+    </script>
+  {% endif %}
+
+  {% if error %}
+    <p style="color:red;">{{ error }}</p>
+  {% endif %}
+  
+  
+  {% if emotion %}
+  
+
+  <div class="sticker-container">
+    <!-- Top Left -->
+    <lottie-player
+      src="{{ url_for('static', filename='animations/' + emotion + '.json') }}"
+      background="transparent" speed="1"
+      style="width: 220px; height: 220px; position: absolute; top: 7%; left: 2%;"
+      loop autoplay>
+    </lottie-player>
+
+    <!-- Top Right -->
+    <lottie-player
+      src="{{ url_for('static', filename='animations/' + emotion + '.json') }}"
+      background="transparent" speed="1"
+      style="width: 220px; height: 220px; position: absolute; top: 25%; right: 2%;"
+      loop autoplay>
+    </lottie-player>
+
+    <!-- Bottom Center -->
+    <lottie-player
+      src="{{ url_for('static', filename='animations/' + emotion + '.json') }}"
+      background="transparent" speed="1"
+      style="width: 150px; height: 150px; position: absolute; bottom: 1%; left: 40%; transform: translateX(-50%);"
+      loop autoplay>
+    </lottie-player>
+  </div>
+{% endif %}
+
+
+
+
+  <!-- Add this inside the body, near the mood output -->
+
+
+  {% if image_url %}
+    <img src="{{ image_url }}" style="width:300px; margin-top:1rem;">
+  {% endif %}
+
+  <hr style="margin: 2rem 0;">
+
+  
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const photoInput = document.getElementById('photoInput');
+    const preview = document.getElementById('preview');
+    const submitBtn = document.getElementById('submitBtn');
+
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      video.srcObject = stream;
+    });
+
+    function capture() {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        photoInput.files = dataTransfer.files;
+        preview.src = URL.createObjectURL(blob);
+        preview.style.display = 'block';
+        submitBtn.click(); // Submit the form
+      }, 'image/jpeg');
+    }
+  </script>
+  <script>
+  const emotion = "{{ emotion }}";  // Passed from Flask backend
+
+  const animURLs = {
+    happy: "https://lottie.host/56e8d85f-ec33-471e-8dd3-3908201022a1/H5BMB2gqRM.json",
+    sad: "https://lottie.host/c3a57fa1-3d40-41d3-8891-0997ef4db7b4/Kn9qSgxFqd.json",
+    angry: "https://lottie.host/f13fd0fc-3433-4fef-9389-f9a5aab7c75c/N3d3wQX2vJ.json",
+    neutral: "https://lottie.host/e71a5b1e-f7bb-4e5c-bc35-6e7856d28b12/ZjAyN0h41D.json",
+    surprise: "https://lottie.host/055dfb2d-5c02-4453-8451-2542152f1f0a/04WBV3XjRU.json",
+    fear: "https://lottie.host/593e7f14-4a1b-45a9-b8f3-61eae6f84b68/UlhdQlGMZc.json"
+  };
+
+  if (emotion && animURLs[emotion]) {
+    ["anim1", "anim2", "anim3"].forEach(id => {
+  lottie.loadAnimation({
+    container: document.getElementById(id),
+    renderer: 'svg',
+    loop: true,
+    autoplay: true,
+    path: animURLs[emotion]
+  });
+});
+
+   
+
+    // Optional: change background color based on mood
+    const bgColors = {
+      happy: "#FFF9C4",
+      sad: "#E1F5FE",
+      angry: "#FFCDD2",
+      neutral: "#F5F5F5",
+      surprise: "#E6EE9C",
+      fear: "#D1C4E9"
+    };
+
+    document.body.style.background = bgColors[emotion] || "#e0f7fa";
+  }
+</script>
+
+</body>
+</html>
