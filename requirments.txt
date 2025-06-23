@@ -1,5 +1,5 @@
 flask
 deepface
 opencv-python
-tensorflow==2.12.0
+tensorflow-cpu==2.12.0
 keras
