@@ -160,7 +160,7 @@
   <!-- Entry Previews -->
   <div id="journalEntries">
     {% for entry in journal %}
-      <div class="entry-box" onclick="openModal({ loop.index0 })">
+      <div class="entry-box" onclick="openModal({{ loop.index0 }})">
         <div class="entry-date">{{ entry.timestamp }}</div>
         <div class="entry-preview">{{ entry.content[:80] }}{% if entry.content|length > 80 %}...{% endif %}</div>
       </div>
@@ -168,7 +168,7 @@
       <!-- Modal for full content -->
       <div id="modal-{{ loop.index0 }}" class="modal">
         <div class="modal-content">
-          <span class="close-btn" onclick="closeModal({ loop.index0 })">&times;</span>
+          <span class="close-btn" onclick="closeModal({{ loop.index0 }})">&times;</span>
           <h3>{{ entry.timestamp }}</h3>
           <p>{{ entry.content | replace('\n','<br>') | safe }}</p>
           <form method="POST" action="{{ url_for('delete_entry') }}">
