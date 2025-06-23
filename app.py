@@ -1,7 +1,7 @@
 from flask import Flask, redirect, render_template, request, url_for
 from deepface import DeepFace
 import os
-from datetime import datetime
+from datetime import datetime,date
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -24,10 +24,14 @@ def home():
 def journal():
     if request.method == 'POST':
         entry = request.form.get('journalText', '').strip()
-        if entry:
+        entry_date = request.form.get('entryDate', '').strip()
+        print(f"POST received - entry: {entry}, date: {entry_date}")
+        if entry and entry_date:
+            timestamp = entry_date 
             with open('journal.txt', 'a', encoding='utf-8') as f:
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 f.write(f"{timestamp}\n{entry}\n---\n")
+            print("Entry saved!")
+    search_date = request.args.get('searchDate', None)
 
     journal_entries = []
     if os.path.exists('journal.txt'):
@@ -35,13 +39,19 @@ def journal():
             raw_entries = f.read().strip().split('---\n')
             for entry in raw_entries:
                 if entry.strip():
-                    # split timestamp and content by first newline
                     parts = entry.strip().split('\n', 1)
                     if len(parts) == 2:
-                        journal_entries.append({'timestamp': parts[0], 'content': parts[1]})
-    # Show newest first
-    journal_entries.reverse()
+                        timestamp_str = parts[0]
+                        content = parts[1]
+                        if search_date:
+                            entry_date = timestamp_str.split(' ')[0]
+                            if entry_date == search_date:
+                                journal_entries.append({'timestamp': timestamp_str, 'content': content})
+                        else:
+                            journal_entries.append({'timestamp': timestamp_str, 'content': content})
 
+    journal_entries.reverse()  # show newest first
+    current_date = date.today().isoformat()
     return render_template('journal.html', journal=journal_entries)
 
 @app.route('/delete_entry', methods=['POST'])
@@ -83,25 +93,13 @@ def analyze():
 
         image_url = url_for('static', filename=f'uploads/{filename}')
         return render_template('index.html', emotion=emotion, image_url=image_url)
-
     else:
         return render_template('index.html', error="Invalid file format")
 
-@app.route('/todo', methods=['GET', 'POST'])
+@app.route('/todo')
 def todo():
-    todos = []
-    if os.path.exists('todo.txt'):
-        with open('todo.txt', 'r', encoding='utf-8') as f:
-            todos = [line.strip() for line in f if line.strip()]
-
-    if request.method == 'POST':
-        task = request.form.get('task', '').strip()
-        if task:
-            with open('todo.txt', 'a', encoding='utf-8') as f:
-                f.write(f"{task}\n")
-            return redirect(url_for('todo'))
-
-    return render_template('todo.html', todos=todos)
+    # Render your todo.html template here instead of placeholder
+    return render_template('todo.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
